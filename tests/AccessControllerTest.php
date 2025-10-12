@@ -69,6 +69,111 @@ class AccessControllerTest extends TestCase
 
     /**
      * @test
+     * Rule: Student can access prep material after course starts
+     */
+    public function student_can_access_prep_material_after_course_starts(): void
+    {
+        // Arrange: Set up a course that starts on 13/05/2025
+        $courseStartDate = new DateTime('2025-05-13');
+        $courseEndDate = new DateTime('2025-06-12');
+        $course = new Course(
+            name: 'A-Level Biology',
+            startDate: $courseStartDate,
+            endDate: $courseEndDate
+        );
+
+        // Create a student
+        $student = new Student(name: 'Emma');
+
+        // Create prep material (available from course start)
+        $prepMaterial = new PrepMaterial(
+            title: 'Biology Reading Guide',
+            course: $course
+        );
+
+        // Student enrolled with valid dates
+        $enrolmentStart = new DateTime('2025-05-01');
+        $enrolmentEnd = new DateTime('2025-05-30');
+        $enrolment = new Enrolment(
+            student: $student,
+            course: $course,
+            startDate: $enrolmentStart,
+            endDate: $enrolmentEnd
+        );
+
+        // Add enrolment to student
+        $student->addEnrolment($enrolment);
+
+        // Access controller
+        $accessController = new AccessController();
+
+        // Act: Try to access content on 13/05/2025 (course start date)
+        $attemptDate = new DateTime('2025-05-13');
+        $canAccess = $accessController->canAccess(
+            student: $student,
+            content: $prepMaterial,
+            dateTime: $attemptDate
+        );
+
+        // Assert: Access should be allowed because course has started
+        $this->assertTrue(
+            $canAccess,
+            'Student should be able to access prep material after course starts'
+        );
+    }
+
+    /**
+     * @test
+     * Edge case: Access on exact course start date boundary
+     */
+    public function student_can_access_content_on_exact_course_start_date(): void
+    {
+        // Arrange: Set up a course with specific start time
+        $courseStartDate = new DateTime('2025-05-13 00:00:00');
+        $course = new Course(
+            name: 'A-Level Physics',
+            startDate: $courseStartDate
+        );
+
+        // Create a student
+        $student = new Student(name: 'David');
+
+        // Create content
+        $prepMaterial = new PrepMaterial(
+            title: 'Physics Introduction',
+            course: $course
+        );
+
+        // Student enrolled with valid dates
+        $enrolment = new Enrolment(
+            student: $student,
+            course: $course,
+            startDate: new DateTime('2025-05-01'),
+            endDate: new DateTime('2025-05-31')
+        );
+
+        $student->addEnrolment($enrolment);
+
+        // Access controller
+        $accessController = new AccessController();
+
+        // Act: Try to access at the EXACT course start time
+        $attemptDate = new DateTime('2025-05-13 00:00:00');
+        $canAccess = $accessController->canAccess(
+            student: $student,
+            content: $prepMaterial,
+            dateTime: $attemptDate
+        );
+
+        // Assert: Access should be allowed at exact start time (inclusive boundary)
+        $this->assertTrue(
+            $canAccess,
+            'Student should be able to access content at the exact course start time'
+        );
+    }
+
+    /**
+     * @test
      * Rule: Student cannot access content after enrolment ends
      */
     public function student_cannot_access_content_after_enrolment_ends(): void
@@ -287,6 +392,63 @@ class AccessControllerTest extends TestCase
         $this->assertTrue(
             $canAccess,
             'Student should be able to access lesson after its scheduled time'
+        );
+    }
+
+    /**
+     * @test
+     * Edge case: Access at exact lesson scheduled time boundary
+     */
+    public function student_can_access_lesson_at_exact_scheduled_time(): void
+    {
+        // Arrange: Set up a course
+        $courseStartDate = new DateTime('2025-05-13');
+        $courseEndDate = new DateTime('2025-06-12');
+        $course = new Course(
+            name: 'A-Level Biology',
+            startDate: $courseStartDate,
+            endDate: $courseEndDate
+        );
+
+        // Create a student
+        $student = new Student(name: 'Emma');
+
+        // Create lesson scheduled for exactly 15/05/2025 at 10:00:00
+        $lessonScheduledTime = new DateTime('2025-05-15 10:00:00');
+        $lesson = new Lesson(
+            title: 'Cell Structure',
+            course: $course,
+            scheduledDateTime: $lessonScheduledTime
+        );
+
+        // Student enrolled with valid dates
+        $enrolmentStart = new DateTime('2025-05-01');
+        $enrolmentEnd = new DateTime('2025-05-30');
+        $enrolment = new Enrolment(
+            student: $student,
+            course: $course,
+            startDate: $enrolmentStart,
+            endDate: $enrolmentEnd
+        );
+
+        // Add enrolment to student
+        $student->addEnrolment($enrolment);
+
+        // Access controller
+        $accessController = new AccessController();
+
+        // Act: Try to access at EXACTLY the scheduled time (10:00:00)
+        $attemptDateTime = new DateTime('2025-05-15 10:00:00');
+        $canAccess = $accessController->canAccess(
+            student: $student,
+            content: $lesson,
+            dateTime: $attemptDateTime
+        );
+
+        // Assert: Access should be allowed at exact scheduled time (>= check)
+        $this->assertTrue(
+            $canAccess,
+            'Student should be able to access lesson at the exact scheduled time'
         );
     }
 
