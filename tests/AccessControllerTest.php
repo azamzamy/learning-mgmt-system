@@ -6,6 +6,8 @@ use DateTime;
 use LMS\AccessController;
 use LMS\Course;
 use LMS\Enrolment;
+use LMS\Homework;
+use LMS\Lesson;
 use LMS\PrepMaterial;
 use LMS\Student;
 use PHPUnit\Framework\TestCase;
@@ -171,6 +173,63 @@ class AccessControllerTest extends TestCase
         $this->assertTrue(
             $canAccess,
             'Student should be able to access content in an ongoing course with no end date'
+        );
+    }
+
+    /**
+     * @test
+     * Rule: Lesson is only available from its scheduled datetime
+     */
+    public function student_cannot_access_lesson_before_scheduled_time(): void
+    {
+        // Arrange: Set up a course
+        $courseStartDate = new DateTime('2025-05-13');
+        $courseEndDate = new DateTime('2025-06-12');
+        $course = new Course(
+            name: 'A-Level Biology',
+            startDate: $courseStartDate,
+            endDate: $courseEndDate
+        );
+
+        // Create a student
+        $student = new Student(name: 'Emma');
+
+        // Create lesson scheduled for 15/05/2025 at 10:00
+        $lessonScheduledTime = new DateTime('2025-05-15 10:00:00');
+        $lesson = new Lesson(
+            title: 'Cell Structure',
+            course: $course,
+            scheduledDateTime: $lessonScheduledTime
+        );
+
+        // Student enrolled with valid dates
+        $enrolmentStart = new DateTime('2025-05-01');
+        $enrolmentEnd = new DateTime('2025-05-30');
+        $enrolment = new Enrolment(
+            student: $student,
+            course: $course,
+            startDate: $enrolmentStart,
+            endDate: $enrolmentEnd
+        );
+
+        // Add enrolment to student
+        $student->addEnrolment($enrolment);
+
+        // Access controller
+        $accessController = new AccessController();
+
+        // Act: Try to access lesson on 15/05/2025 at 09:59 (before scheduled time)
+        $attemptDateTime = new DateTime('2025-05-15 09:59:00');
+        $canAccess = $accessController->canAccess(
+            student: $student,
+            content: $lesson,
+            dateTime: $attemptDateTime
+        );
+
+        // Assert: Access should be denied because lesson hasn't started yet
+        $this->assertFalse(
+            $canAccess,
+            'Student should not be able to access lesson before its scheduled time'
         );
     }
 }
