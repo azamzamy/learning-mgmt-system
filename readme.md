@@ -63,15 +63,19 @@ vendor/bin/phpunit --colors=always --testdox
 
 ### Test Coverage
 
-**8 comprehensive tests, 10 assertions** covering:
+**11 comprehensive tests, 13 assertions** covering:
 1. ✔ Student cannot access content before course starts
-2. ✔ Student cannot access content after enrolment ends
-3. ✔ Student can access content in ongoing course with no end date
-4. ✔ Student cannot access lesson before scheduled time
-5. ✔ Student can access lesson after scheduled time
-6. ✔ Student with multiple enrolments can access enrolled course
-7. ✔ Student cannot access course they are not enrolled in
-8. ✔ Student with renewed enrolment can access during extended period
+2. ✔ Student can access prep material after course starts
+3. ✔ Student can access content on exact course start date
+4. ✔ Student cannot access content after enrolment ends
+5. ✔ Student can access content in ongoing course with no end date
+6. ✔ Student cannot access lesson before scheduled time
+7. ✔ Student can access lesson after scheduled time
+8. ✔ Student can access lesson at exact scheduled time
+9. ✔ Student with multiple enrolments can access enrolled course
+10. ✔ Student cannot access course they are not enrolled in
+11. ✔ Student with renewed enrolment can access during extended period
+
 
 ## Usage Example
 
