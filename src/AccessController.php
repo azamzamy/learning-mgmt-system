@@ -8,7 +8,13 @@ class AccessController
 {
     public function canAccess(Student $student, Content $content, DateTime $dateTime): bool
     {
-        // TODO: Implement access logic
-        return true; // Intentionally wrong to make test fail
+        $course = $content->getCourse();
+        
+        // Rule: Course must have started
+        if ($dateTime < $course->getStartDate()) {
+            return false;
+        }
+
+        return true;
     }
 }
