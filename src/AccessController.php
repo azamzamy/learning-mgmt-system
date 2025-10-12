@@ -31,6 +31,13 @@ class AccessController
             return false;
         }
 
+        // Rule: Lessons are only available from their scheduled datetime
+        if ($content instanceof Lesson) {
+            if ($dateTime < $content->getScheduledDateTime()) {
+                return false;
+            }
+        }
+
         return true;
     }
 }
