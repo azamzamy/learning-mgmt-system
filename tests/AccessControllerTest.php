@@ -289,4 +289,89 @@ class AccessControllerTest extends TestCase
             'Student should be able to access lesson after its scheduled time'
         );
     }
-}
+
+    /**
+     * @test
+     * Rule: Student with multiple enrolments can access correct course
+     */
+    public function student_with_multiple_enrolments_can_access_enrolled_course(): void
+    {
+        // Arrange: Set up two different courses
+        $biologyStartDate = new DateTime('2025-05-13');
+        $biologyCourse = new Course(
+            name: 'A-Level Biology',
+            startDate: $biologyStartDate,
+            endDate: new DateTime('2025-06-12')
+        );
+
+        $chemistryStartDate = new DateTime('2025-05-15');
+        $chemistryCourse = new Course(
+            name: 'A-Level Chemistry',
+            startDate: $chemistryStartDate,
+            endDate: new DateTime('2025-06-15')
+        );
+
+        // Create a student
+        $student = new Student(name: 'Emma');
+
+        // Create content for both courses
+        $biologyLesson = new Lesson(
+            title: 'Cell Structure',
+            course: $biologyCourse,
+            scheduledDateTime: new DateTime('2025-05-15 10:00:00')
+        );
+
+        $chemistryPrep = new PrepMaterial(
+            title: 'Periodic Table',
+            course: $chemistryCourse
+        );
+
+        // Student enrolled in both courses with different dates
+        $biologyEnrolment = new Enrolment(
+            student: $student,
+            course: $biologyCourse,
+            startDate: new DateTime('2025-05-01'),
+            endDate: new DateTime('2025-05-30')
+        );
+
+        $chemistryEnrolment = new Enrolment(
+            student: $student,
+            course: $chemistryCourse,
+            startDate: new DateTime('2025-05-10'),
+            endDate: new DateTime('2025-06-20')
+        );
+
+        // Add both enrolments to student
+        $student->addEnrolment($biologyEnrolment);
+        $student->addEnrolment($chemistryEnrolment);
+
+        // Access controller
+        $accessController = new AccessController();
+
+        // Act & Assert: Can access Biology lesson on 15/05/2025 at 10:01
+        $attemptDateTime = new DateTime('2025-05-15 10:01:00');
+        $canAccessBiology = $accessController->canAccess(
+            student: $student,
+            content: $biologyLesson,
+            dateTime: $attemptDateTime
+        );
+
+        $this->assertTrue(
+            $canAccessBiology,
+            'Student should be able to access Biology lesson when enrolled in Biology'
+        );
+
+        // Act & Assert: Can access Chemistry prep on 16/05/2025
+        $chemistryAttemptDate = new DateTime('2025-05-16');
+        $canAccessChemistry = $accessController->canAccess(
+            student: $student,
+            content: $chemistryPrep,
+            dateTime: $chemistryAttemptDate
+        );
+
+        $this->assertTrue(
+            $canAccessChemistry,
+            'Student should be able to access Chemistry prep when enrolled in Chemistry'
+        );
+    }
+
