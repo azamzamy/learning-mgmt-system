@@ -119,4 +119,58 @@ class AccessControllerTest extends TestCase
             'Student should not be able to access content after enrolment ends'
         );
     }
+
+    /**
+     * @test
+     * Rule: Student can access content in ongoing course (no end date)
+     */
+    public function student_can_access_content_in_ongoing_course_with_no_end_date(): void
+    {
+        // Arrange: Set up an ongoing course with no end date
+        $courseStartDate = new DateTime('2025-05-13');
+        $course = new Course(
+            name: 'A-Level Physics',
+            startDate: $courseStartDate
+            // No end date - course runs indefinitely
+        );
+
+        // Create a student
+        $student = new Student(name: 'John');
+
+        // Create prep material
+        $prepMaterial = new PrepMaterial(
+            title: 'Physics Fundamentals',
+            course: $course
+        );
+
+        // Student enrolled with valid dates
+        $enrolmentStart = new DateTime('2025-05-10');
+        $enrolmentEnd = new DateTime('2025-12-31');
+        $enrolment = new Enrolment(
+            student: $student,
+            course: $course,
+            startDate: $enrolmentStart,
+            endDate: $enrolmentEnd
+        );
+
+        // Add enrolment to student
+        $student->addEnrolment($enrolment);
+
+        // Access controller
+        $accessController = new AccessController();
+
+        // Act: Try to access content on 15/05/2025 (course started, within enrolment)
+        $attemptDate = new DateTime('2025-05-15');
+        $canAccess = $accessController->canAccess(
+            student: $student,
+            content: $prepMaterial,
+            dateTime: $attemptDate
+        );
+
+        // Assert: Access should be allowed - course has no end date
+        $this->assertTrue(
+            $canAccess,
+            'Student should be able to access content in an ongoing course with no end date'
+        );
+    }
 }
