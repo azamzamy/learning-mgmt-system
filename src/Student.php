@@ -21,6 +21,16 @@ class Student
         return $this->enrolments;
     }
 
+    public function getEnrolmentForCourse(Course $course): ?Enrolment
+    {
+        foreach ($this->enrolments as $enrolment) {
+            if ($enrolment->getCourse() === $course) {
+                return $enrolment;
+            }
+        }
+        return null;
+    }
+
     public function getName(): string
     {
         return $this->name;
