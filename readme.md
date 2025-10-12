@@ -126,20 +126,6 @@ $canAccess = $accessController->canAccess(
 // Result: true (student can access after lesson starts)
 ```
 
-## Architecture
-
-### Clean Code Principles
-- **Single Responsibility** - Each class has one clear purpose
-- **Encapsulation** - Business logic contained within domain models
-- **Dependency Inversion** - Abstract Content base class for extensibility
-- **Test-Driven Development** - All features developed using Red-Green-Refactor cycle
-
-### AccessController Design
-The `AccessController` uses private helper methods for clarity:
-- `isCourseActiveOn()` - Validates course date range
-- `hasValidEnrolment()` - Checks for active enrolment
-- `isContentAvailableOn()` - Handles content-specific rules
-
 ## Development Process
 
 This project was built following strict TDD methodology:
@@ -149,3 +135,9 @@ This project was built following strict TDD methodology:
 2. **GREEN** - Write minimal code to pass the test
 3. **REFACTOR** - Improve code structure without changing behavior
 
+## AI Usage
+
+This project utilized AI assistance (GitHub Copilot) in the following areas:
+
+- **Test Case Generation**: AI was used to generate comprehensive test cases covering various scenarios; positive, edge cases, and boundary conditions.
+- **Documentation**: Some parts of this README with AI support.
