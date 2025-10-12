@@ -42,15 +42,10 @@ class AccessController
 
     private function hasValidEnrolment(Student $student, Course $course, DateTime $dateTime): bool
     {
-        $enrolment = $student->getEnrolmentForCourse($course);
+        $enrolment = $student->getEnrolmentForCourse($course, $dateTime);
         
-        // Student must have an enrolment for this course
+        // Student must have an active enrolment for this course at the given time
         if ($enrolment === null) {
-            return false;
-        }
-
-        // Enrolment must be active at the given time
-        if ($dateTime < $enrolment->getStartDate() || $dateTime > $enrolment->getEndDate()) {
             return false;
         }
 
