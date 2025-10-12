@@ -145,5 +145,3 @@ This project was built following strict TDD methodology:
 2. **GREEN** - Write minimal code to pass the test
 3. **REFACTOR** - Improve code structure without changing behavior
 
-
-**Built with ❤️ using Test-Driven Development**
