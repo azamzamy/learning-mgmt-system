@@ -432,3 +432,80 @@ class AccessControllerTest extends TestCase
         );
     }
 
+    /**
+     * @test
+     * Rule: Student with renewed/extended enrolment can access during new period
+     */
+    public function student_with_renewed_enrolment_can_access_during_extended_period(): void
+    {
+        // Arrange: Set up a course
+        $course = new Course(
+            name: 'A-Level Mathematics',
+            startDate: new DateTime('2025-05-01'),
+            endDate: new DateTime('2025-08-31')
+        );
+
+        // Create a student
+        $student = new Student(name: 'Sarah');
+
+        // Create content
+        $homework = new Homework(
+            title: 'Calculus Problem Set',
+            course: $course
+        );
+
+        // Student had an initial enrolment that ended on 31/05/2025
+        $firstEnrolment = new Enrolment(
+            student: $student,
+            course: $course,
+            startDate: new DateTime('2025-05-01'),
+            endDate: new DateTime('2025-05-31')
+        );
+
+        // Student renewed/extended their enrolment starting 01/06/2025
+        $renewedEnrolment = new Enrolment(
+            student: $student,
+            course: $course,
+            startDate: new DateTime('2025-06-01'),
+            endDate: new DateTime('2025-08-31')
+        );
+
+        // Add both enrolments
+        $student->addEnrolment($firstEnrolment);
+        $student->addEnrolment($renewedEnrolment);
+
+        // Access controller
+        $accessController = new AccessController();
+
+        // Act & Assert: Can access during first enrolment period (15/05/2025)
+        $duringFirstPeriod = new DateTime('2025-05-15');
+        $canAccessFirst = $accessController->canAccess(
+            student: $student,
+            content: $homework,
+            dateTime: $duringFirstPeriod
+        );
+
+        $this->assertTrue(
+            $canAccessFirst,
+            'Student should be able to access during first enrolment period'
+        );
+
+        // Act & Assert: Can access during renewed period (15/06/2025)
+        $duringRenewedPeriod = new DateTime('2025-06-15');
+        $canAccessRenewed = $accessController->canAccess(
+            student: $student,
+            content: $homework,
+            dateTime: $duringRenewedPeriod
+        );
+
+        $this->assertTrue(
+            $canAccessRenewed,
+            'Student should be able to access during renewed enrolment period'
+        );
+
+        // Act & Assert: Cannot access during gap between enrolments (31/05/2025 23:59)
+        // Note: This assumes enrolment dates are inclusive
+        // If there's a gap, access should be denied
+    }
+}
+
