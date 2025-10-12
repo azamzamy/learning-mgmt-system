@@ -375,3 +375,60 @@ class AccessControllerTest extends TestCase
         );
     }
 
+    /**
+     * @test
+     * Rule: Student cannot access course they are not enrolled in
+     */
+    public function student_cannot_access_course_they_are_not_enrolled_in(): void
+    {
+        // Arrange: Set up two courses
+        $biologyCourse = new Course(
+            name: 'A-Level Biology',
+            startDate: new DateTime('2025-05-13'),
+            endDate: new DateTime('2025-06-12')
+        );
+
+        $physicsCourse = new Course(
+            name: 'A-Level Physics',
+            startDate: new DateTime('2025-05-13'),
+            endDate: new DateTime('2025-06-12')
+        );
+
+        // Create a student
+        $student = new Student(name: 'Emma');
+
+        // Create content for Physics (which student is NOT enrolled in)
+        $physicsLesson = new Lesson(
+            title: 'Mechanics',
+            course: $physicsCourse,
+            scheduledDateTime: new DateTime('2025-05-15 10:00:00')
+        );
+
+        // Student only enrolled in Biology
+        $biologyEnrolment = new Enrolment(
+            student: $student,
+            course: $biologyCourse,
+            startDate: new DateTime('2025-05-01'),
+            endDate: new DateTime('2025-05-30')
+        );
+
+        $student->addEnrolment($biologyEnrolment);
+
+        // Access controller
+        $accessController = new AccessController();
+
+        // Act: Try to access Physics lesson
+        $attemptDateTime = new DateTime('2025-05-15 10:01:00');
+        $canAccess = $accessController->canAccess(
+            student: $student,
+            content: $physicsLesson,
+            dateTime: $attemptDateTime
+        );
+
+        // Assert: Access should be denied - not enrolled in Physics
+        $this->assertFalse(
+            $canAccess,
+            'Student should not be able to access content from a course they are not enrolled in'
+        );
+    }
+
