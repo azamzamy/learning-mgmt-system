@@ -2,41 +2,43 @@
 
 namespace LMS;
 
+use DateTime;
+
+/**
+ * Student Aggregate Root
+ * 
+ * Manages student enrolments and access control logic.
+ * Enrolments are stored as value objects within the aggregate.
+ */
 class Student
 {
-    private array $enrolments = [];
+    private array $courseEnrolments = [];
 
     public function __construct(
         private string $name
     ) {
     }
 
-    public function addEnrolment(Enrolment $enrolment): void
+    public function enrolInCourse(string $courseId, DateTime $startDate, DateTime $endDate): void
     {
-        $this->enrolments[] = $enrolment;
+        $this->courseEnrolments[] = [
+            'courseId' => $courseId,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ];
     }
 
-    public function getEnrolments(): array
+    public function hasActiveEnrolment(string $courseId, DateTime $at): bool
     {
-        return $this->enrolments;
-    }
-
-    public function getEnrolmentForCourse(Course $course, ?\DateTime $dateTime = null): ?Enrolment
-    {
-        foreach ($this->enrolments as $enrolment) {
-            if ($enrolment->getCourse() === $course) {
-                // If no date provided, return first matching enrolment
-                if ($dateTime === null) {
-                    return $enrolment;
-                }
-                
-                // Check if this enrolment is active on the given date
-                if ($dateTime >= $enrolment->getStartDate() && $dateTime <= $enrolment->getEndDate()) {
-                    return $enrolment;
+        foreach ($this->courseEnrolments as $enrolment) {
+            if ($enrolment['courseId'] === $courseId) {
+                if ($at >= $enrolment['startDate'] && $at <= $enrolment['endDate']) {
+                    return true;
                 }
             }
         }
-        return null;
+
+        return false;
     }
 
     public function getName(): string
@@ -44,3 +46,4 @@ class Student
         return $this->name;
     }
 }
+

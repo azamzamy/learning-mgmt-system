@@ -21,14 +21,9 @@ This project implements the core business logic for determining whether a studen
 - **Multiple Enrolments** - Handles students enrolled in multiple courses and renewed enrolments
 
 ### Domain Models
-- **Student** - Manages multiple enrolments
-- **Course** - Contains start/end dates and content
-- **Enrolment** - Links students to courses with date ranges
-- **Content** (abstract) - Base class for all content types
-  - **Lesson** - Available from scheduled datetime
-  - **Homework** - Available from course start
-  - **PrepMaterial** - Available from course start
-- **AccessController** - Validates access based on all rules
+- **Course** (Aggregate Root) - Manages course schedule and all content items
+- **Student** (Aggregate Root) - Manages enrolments and orchestrates access control
+- **ContentItem** (Value Object) - Represents lessons, homework, and prep materials with availability rules
 
 ## 🛠️ Tech Stack
 
@@ -134,6 +129,120 @@ This project was built following strict TDD methodology:
 1. **RED** - Write a failing test
 2. **GREEN** - Write minimal code to pass the test
 3. **REFACTOR** - Improve code structure without changing behavior
+
+## Architecture:
+
+Decided to refactor the implementation to use **Aggregate Root pattern** from Domain-Driven Design (DDD) as an opportunity to learn more about the approach, reducing complexity by consolidating related entities into aggregates.
+
+#### **Course Aggregate Root**
+The `Course` class serves as an aggregate root that owns and manages its content:
+
+**Key principle:** Content cannot exist independently of a Course - it's always accessed through the Course aggregate.
+
+#### **Student Aggregate Root**
+The `Student` class manages enrolments and orchestrates access control:
+
+**Key principle:** Business logic for access control lives in the domain objects, not external services.
+
+---
+
+## Consious Design Decisions:
+
+### 1. ContentItem Objects vs Arrays
+
+In the aggregate root refactoring, I chose to represent content as **ContentItem value objects** rather than associative arrays:
+
+```php
+// Array approach
+$content = [
+    'type' => 'lesson',
+    'title' => 'Cell Structure',
+    'scheduledDateTime' => new DateTime('2025-05-15 10:00:00')
+];
+
+// Object approach
+$content = new ContentItem(
+    type: 'lesson',
+    title: 'Cell Structure',
+    scheduledDateTime: new DateTime('2025-05-15 10:00:00')
+);
+```
+
+#### Why Objects Over Arrays?
+
+##### 1. **Type Safety**
+```php
+// With arrays - typos cause runtime errors
+echo $content['titel'];  // null, silent failure
+
+// With objects - typos caught at compile time
+echo $content->getTitel();  // Fatal error: method doesn't exist
+```
+
+##### 2. **IDE Support**
+```php
+// With arrays - no autocomplete
+$content['???']  // You need to remember the keys
+
+// With objects - full autocomplete
+$content->get...  // IDE suggests: getType(), getTitle(), getScheduledDateTime()
+```
+
+##### 3. **Encapsulation**
+```php
+// With arrays - logic scattered across the codebase
+if ($content['type'] === 'lesson') {
+    return $at >= $content['scheduledDateTime'];
+}
+
+// With objects - logic encapsulated in the value object
+return $content->isAvailableAt($at);  // Business logic lives where it belongs
+```
+
+##### 4. **Refactoring Safety**
+```php
+// With arrays - changing structure breaks everything
+$content['scheduled_time']  // Changed from 'scheduledDateTime'
+// All code using this key must be manually found and updated ❌
+
+// With objects - change internal implementation, keep public API
+class ContentItem {
+    private ?DateTime $scheduledDateTime;  // Can rename this freely
+    
+    public function getScheduledDateTime(): ?DateTime {  // Public API stays same
+        return $this->scheduledDateTime;
+    }
+}
+```
+
+##### 5. **Prevents Invalid State**
+```php
+// With arrays - can create invalid data
+$content = [
+    'type' => 'lesson',
+    'scheduledDateTime' => null  // Invalid! Lessons need scheduled time ❌
+];
+
+// With objects - constructor ensures valid state
+class ContentItem {
+    public function __construct(
+        private string $type,
+        private string $title,
+        private ?DateTime $scheduledDateTime = null
+    ) {
+        // Could add validation here
+        if ($type === 'lesson' && $scheduledDateTime === null) {
+            throw new InvalidArgumentException('Lessons require scheduled time');
+        }
+    }
+}
+```
+
+### 2. Separating StudentAAccessControlTests from StudentTests
+
+To maintain clarity and separation of concerns, I created a dedicated test class `StudentAccessControlTests` specifically for access control scenarios, distinct from general `StudentTests`.
+
+---
 
 ## AI Usage
 
